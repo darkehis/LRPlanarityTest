@@ -31,6 +31,7 @@ public class LRPartitionAlgo
 		// -----------recursion------------
 		DFS(originalGraph, graph, ROOT_ID);
 
+
 		return graph;
 	}
 
@@ -101,20 +102,44 @@ public class LRPartitionAlgo
 	public static LRConstraintGraph generateConstraintGraph(LROrientedDFSGraph orientedGraph)
 	{
 		/*
-		 * for each edge e in E(orientedGraph) { if(e is a fork (e = uv)) { for each
-		 * pair(e1,e2) in outcomingEdges(v) { for each pair(b1,b2) in retEdge(e1) X
-		 * retEdge(e2) { //different constraint check if(b1>lowpt(e2) && b2>lowpt(e1)) {
-		 * add difConstraint(b1,b2); }
+		 * for each edge e in E(orientedGraph) 
+		 * { 
+		 * 	if(e is a fork (e = uv)) 
+		 * 	{ 
+		 * 		for each pair(e1,e2) in outcomingEdges(v) 
+		 * 		{ 
+		 * 			for each pair(b1,b2) in retEdge(e1) X retEdge(e2) 
+		 * 			{ 
+		 * 				//different constraint check 
+		 * 				if(b1>lowpt(e2) && b2>lowpt(e1)) 
+		 * 				{
+		 * 					add difConstraint(b1,b2); 
+		 * 				}
 		 * 
-		 * //same constraint check bMin = min(b1,b2); e' = e; while(height(e')>bMin) {
-		 * if(lowpt(e')<bMin) { add sameConstraint(b1,b2); break while; } e' =
-		 * parentEdge(e'); } } } } }
+		 * 				//same constraint check 
+		 * 				bMin = min(b1,b2); 
+		 * 				e' = e; 
+		 * 				while(height(e')>bMin) 
+		 * 				{
+		 * 					if(lowpt(e')<bMin) 
+		 * 					{ 
+		 * 						add sameConstraint(b1,b2); 
+		 * 						break while; 
+		 * 					}
+		 * 					e' = parentEdge(e'); 
+		 * 				}
+		 * 			 }
+		 * 		 }
+		 * 	 }
+		 * }
 		 */
 
 		LRConstraintGraph constraintGraph = new LRConstraintGraph();
 
 		Set<DefaultEdge> setEdge = orientedGraph.edgeSet();
 		Iterator<DefaultEdge> itEdge = setEdge.iterator();
+		int nextIdVertex = 0;
+		Map<Integer,Integer> mapVertexId = new HashMap<>();
 		while (itEdge.hasNext())
 		{
 			DefaultEdge e = itEdge.next();
@@ -134,16 +159,43 @@ public class LRPartitionAlgo
 					Iterator<Integer> itB1 = returnEdge1.iterator();
 					while (itB1.hasNext())
 					{
-						int b1 = itB1.next();
+						int heightB1 = itB1.next();
+						int hashB1 = orientedGraph.getReturnRepresentant(e1, heightB1).hashCode();
+						int b1;
+						if(mapVertexId.containsKey(hashB1))
+						{
+							b1 = mapVertexId.get(hashB1);
+						}
+						else
+						{
+							b1 = nextIdVertex;
+							nextIdVertex++;
+							mapVertexId.put(hashB1, b1);
+						}
 						constraintGraph.addVertex(b1);
 						Iterator<Integer> itB2 = returnEdge2.iterator();
 						while (itB2.hasNext())
 						{
-							int b2 = itB2.next();
-							constraintGraph.addVertex(b2);
-							// checking diferent constrainte;
-							if (b1 > orientedGraph.lowpt(e2) && b2 > orientedGraph.lowpt(e1))
+							int heightB2 = itB2.next();
+							int hashB2 = orientedGraph.getReturnRepresentant(e2, heightB2).hashCode();
+							int b2;
+							if(mapVertexId.containsKey(hashB2))
 							{
+								b2 = mapVertexId.get(hashB2);
+							}
+							else
+							{
+								b2 = nextIdVertex;
+								nextIdVertex++;
+								mapVertexId.put(hashB2, b2);
+							}
+							constraintGraph.addVertex(b2);
+							// checking different constraint;
+//System.out.println("checking constraint: (" + orientedGraph.getEdgeSource(e1) + "," + orientedGraph.getEdgeTarget(e1) + ") b" + b1 + "::lowpt=" + heightB1 + " AND (" +
+							//orientedGraph.getEdgeSource(e2) + "," + orientedGraph.getEdgeTarget(e2) + ") b" + b2 + "::lowpt=" + heightB2);
+							if (heightB1 > orientedGraph.lowpt(e2) && heightB2 > orientedGraph.lowpt(e1))
+							{
+								///System.out.println("dif constraint");
 								// check if there is no different sign edge between the two vertices yet
 								if (constraintGraph.containsEdge(b1, b2))
 								{
@@ -151,10 +203,14 @@ public class LRPartitionAlgo
 									if (constraintGraph.getEdgeWeight(previousConstraintEdge) != -1)
 									{
 										// There is already a same-constraint edge between the 2 vertices : impossible
-										// to be planar
-										return null;
+										// to be planar 
+										//edge marked with weight 0
+										System.out.println("not planar : not previously dif-constraint");
+										constraintGraph.setEdgeWeight(previousConstraintEdge, 0);
+										//return null;
 									}
-								} else
+								} 
+								else
 								{
 									DefaultWeightedEdge difConstraintEdge = new DefaultWeightedEdge();
 									constraintGraph.addEdge(b1, b2, difConstraintEdge);
@@ -163,30 +219,44 @@ public class LRPartitionAlgo
 							}
 
 							// checking same constraint
-							double bMin = Math.min(b1, b2);
+							int heightBMin = Math.min(heightB1, heightB2);
+							int heightBMax = Math.max(heightB1, heightB2);
 							DefaultEdge e3 = e;
-							while (orientedGraph.sourceHeight(e3) > bMin)
+							boolean foundSameConstraint = false;
+							while (orientedGraph.sourceHeight(e3) > heightBMax)
 							{
-								if (orientedGraph.lowpt(e3) < bMin)
+								Set<DefaultEdge> setChildEdge = orientedGraph.outgoingEdgesOf(orientedGraph.getEdgeSource(e3));
+								for(DefaultEdge childEdge : setChildEdge)
 								{
-									// check if there is no different sign edge between the two vertices yet
-									if (constraintGraph.containsEdge(b1, b2))
+									if(!childEdge.equals(e3) && orientedGraph.lowpt(childEdge) < heightBMin)
 									{
-										DefaultWeightedEdge previousConstraintEdge = constraintGraph.getEdge(b1, b2);
-										if (constraintGraph.getEdgeWeight(previousConstraintEdge) != 1)
+										//System.out.println("same constraint");
+										foundSameConstraint = true;
+										// check if there is no different sign edge between the two vertices yet
+										if (constraintGraph.containsEdge(b1, b2))
 										{
-											// There is already a different-constraint edge between the 2 vertices :
-											// impossible to be planar
-											return null;
+											DefaultWeightedEdge previousConstraintEdge = constraintGraph.getEdge(b1, b2);
+											if (constraintGraph.getEdgeWeight(previousConstraintEdge) != 1)
+											{
+												// There is already a different-constraint edge between the 2 vertices :
+												// impossible to be planar
+												//edge marked with weight 0
+												constraintGraph.setEdgeWeight(previousConstraintEdge, 0);
+												System.out.println("not planar not previously same-constraint");
+												//return null;
+											}
+										} 
+										else
+										{
+											DefaultWeightedEdge sameConstraintEdge = new DefaultWeightedEdge();
+											constraintGraph.addEdge(b1, b2, sameConstraintEdge);
+											constraintGraph.setEdgeWeight(sameConstraintEdge, 1);
 										}
-									} else
-									{
-										DefaultWeightedEdge sameConstraintEdge = new DefaultWeightedEdge();
-										constraintGraph.addEdge(b1, b2, sameConstraintEdge);
-										constraintGraph.setEdgeWeight(sameConstraintEdge, 1);
+										break;
 									}
-									break;
 								}
+								if(foundSameConstraint)
+									break;
 								e3 = orientedGraph.parentEdge(e3);
 							}
 						}

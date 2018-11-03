@@ -1,7 +1,9 @@
+import java.util.AbstractMap.SimpleEntry;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -20,7 +22,17 @@ public class LROrientedDFSGraph extends SimpleDirectedGraph<Integer	, DefaultEdg
 	/*private Map<DefaultEdge, Integer> _mapSourceHeight;
 	private Map<DefaultEdge,Integer> _mapTargetHeight;*/
 	private Map<Integer,Integer> _mapVertexHeight;
-	private Map<DefaultEdge,SortedSet<Integer>> _mapReturnEdge;
+	private Map<DefaultEdge,SortedSet<Integer>> _mapReturnEdgeHeight;
+	private Map<Entry<DefaultEdge,Integer>,DefaultEdge> _mapReturnEdgeRepresentant;
+	
+	public LROrientedDFSGraph()
+	{
+		super(DefaultEdge.class);
+	
+		_mapVertexHeight = new HashMap<>();
+		_mapReturnEdgeHeight = new HashMap<>();
+		_mapReturnEdgeRepresentant = new HashMap<>();
+	}
 	
 	public int targetHeight(DefaultEdge e)
 	{
@@ -39,28 +51,34 @@ public class LROrientedDFSGraph extends SimpleDirectedGraph<Integer	, DefaultEdg
 	
 	public int lowpt(DefaultEdge e)
 	{
-		if(_mapReturnEdge.get(e).isEmpty())
+		if(_mapReturnEdgeHeight.get(e).isEmpty())
 		{
 			return Integer.MAX_VALUE;
 		}
 		else
 		{
-			return _mapReturnEdge.get(e).first();
+			return _mapReturnEdgeHeight.get(e).first();
 		}
 	}
 	
 	public void addReturnEdgeHeight(DefaultEdge parentEdge,DefaultEdge childEdge)
 	{
-		SortedSet<Integer> childReturnEdge = _mapReturnEdge.get(childEdge);
-		SortedSet<Integer> parentReturnEdge = _mapReturnEdge.get(parentEdge);
-		parentReturnEdge.addAll(childReturnEdge.headSet(sourceHeight(parentEdge)));
+		SortedSet<Integer> childReturnEdge = _mapReturnEdgeHeight.get(childEdge);
+		SortedSet<Integer> parentReturnEdge = _mapReturnEdgeHeight.get(parentEdge);
+		SortedSet<Integer> newReturnEdge = childReturnEdge.headSet(sourceHeight(parentEdge));
+		parentReturnEdge.addAll(newReturnEdge);
+		for(int height : newReturnEdge)
+		{
+			_mapReturnEdgeRepresentant.put(new SimpleEntry<>(parentEdge,height), _mapReturnEdgeRepresentant.get(new SimpleEntry<>(childEdge,height)));
+		}
+	
 	}
 	
 
 	@Override
 	public boolean addEdge(Integer sourceVertex, Integer targetVertex, DefaultEdge e)
 	{
-		_mapReturnEdge.put(e, new TreeSet<>());
+		_mapReturnEdgeHeight.put(e, new TreeSet<>());
 		return super.addEdge(sourceVertex, targetVertex, e);
 	}
 
@@ -177,13 +195,7 @@ public class LROrientedDFSGraph extends SimpleDirectedGraph<Integer	, DefaultEdg
 	}
 	
 
-	public LROrientedDFSGraph()
-	{
-		super(DefaultEdge.class);
-	
-		_mapVertexHeight = new HashMap<>();
-		_mapReturnEdge = new HashMap<>();
-	}
+
 	
 	public void setVertexHeight(int v,int height)
 	{
@@ -198,16 +210,22 @@ public class LROrientedDFSGraph extends SimpleDirectedGraph<Integer	, DefaultEdg
 	//adding return point height to the return edge of a backedge (backedges have only one return edge: themselve)
 	public void updateBackEdgeReturnEdge(DefaultEdge e)
 	{
-		SortedSet<Integer> returnEdge = _mapReturnEdge.get(e);
+		SortedSet<Integer> returnEdge = _mapReturnEdgeHeight.get(e);
 		returnEdge.add(targetHeight(e));
+		_mapReturnEdgeRepresentant.put(new SimpleEntry<>(e, targetHeight(e)), e);
 		
 	}
 	
 	public SortedSet<Integer> getReturnEdge(DefaultEdge e)
 	{
-		return _mapReturnEdge.get(e);
+		return _mapReturnEdgeHeight.get(e);
 	}
 	
+	
+	public DefaultEdge getReturnRepresentant(DefaultEdge edge,int height)
+	{
+		return _mapReturnEdgeRepresentant.get(new SimpleEntry<>(edge,height));
+	}
 
 	
 
