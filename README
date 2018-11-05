@@ -1,0 +1,56 @@
+Left-Right Planarity Criterion Test
+
+This program tests wether a graph is planar using the Left-Right Planarity Criterion.
+
+To run the program: 
+-built it with ant (build.xml)
+-lauch the executable jar file created: java -jar LRPlanarityTest.jar [nameOfTheGraphWitoutJSONExtension]
+where name of the graph is the filename of the .json file located in graphs/ directory.
+
+Two new graphs are cretaed int the graphs/ directory: 
+-the oriented copy of the original graph NameOfTheGraph_oriented.json
+-the constraint graph computed NameOfTheGraph_constraint.json
+
+The algorihtm used is in O(m^3*n).
+/!\ The check algorithme for odd cycles in the constraint graph is not tested yet:
+constraint graph should be check "manually".
+
+For the format of the .json files:
+
+-for the original graph:
+
+{
+    "vertex" : [ id_1,id_2,id_3,id_4 ],
+    "edge" : [[id1_,id2],[id2_,id3],[id1_,id4]]
+}
+
+Where id_i are integers; the id of the vertices of the graph.
+There should always be a vertex with id 0.
+And the order of these ids does not matter int the edge description.
+/!\For now it only works with connected graphs. 
+
+
+
+-for the oriented graph:
+{
+"vertex":[id_1,id_2,id_3,id_4],
+"edge":[[id_1,id_2,heght(id_1),height(id_2),lowpt],[id_3,id_4,heght(id_3),height(id_4),lowpt]]
+}
+
+Where vertices are the same way as for original graph.
+For edge the order of vertices ids matters; height(id_i) is the height in the DFS tree of the vertex, and lowpt is the lowpoint computed by the DFS.
+
+
+
+-for the constraint graph:
+{
+"vertex":[id_b1,id_b2,id_b3],
+"edge":[[id_b1,id_b2,1],[id_b1,id_b3,-1],[id_b3,id_b2,0]]
+}
+Where vertices represent backedges of the DFS-oriented graph.
+
+For the edge: the order of the vertices does not matter. Third value is the constraint part of the edge: 
+-1 for "same-constraint"
+- -1 for "different-constraint"
+- 0 for both (constraint graph not legal: graph is not planar).
+

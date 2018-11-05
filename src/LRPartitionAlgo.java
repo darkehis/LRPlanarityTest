@@ -46,7 +46,7 @@ public class LRPartitionAlgo
 		// tree edges
 		while (!originalGraph.getUnmarkedNeighbors(currentVertex).isEmpty())
 		{
-			int size = originalGraph.getUnmarkedNeighbors(currentVertex).size();
+			//int size = originalGraph.getUnmarkedNeighbors(currentVertex).size();
 			//System.out.println("vertex " + currentVertex + ":" + size + " unmarked neighbors.");
 
 			int newVertex = originalGraph.getUnmarkedNeighbors(currentVertex).iterator().next();
@@ -59,7 +59,7 @@ public class LRPartitionAlgo
 			graph.setVertexHeight(newVertex, originalGraph.getVertexHeight(newVertex));
 
 			//System.out.println("New height of vertex:" + newVertex + "=" + originalGraph.getVertexHeight(newVertex));
-			size = originalGraph.getUnmarkedNeighbors(currentVertex).size();
+			//size = originalGraph.getUnmarkedNeighbors(currentVertex).size();
 			//System.out.println("Vertex " + currentVertex + " has now " + size + " unmarked neighbors");
 
 			DefaultEdge treeEdge = new DefaultEdge(); // treeEdge : newVertex.get_height() = currentVertex.get_height()
@@ -74,7 +74,7 @@ public class LRPartitionAlgo
 		}
 		// back edges
 		Set<Integer> neighbors = originalGraph.getNeighbors(currentVertex);
-		//System.out.println("handling backedges fo vertex:" + currentVertex);
+		//System.out.println("handling backedges for vertex:" + currentVertex);
 		for (int v : neighbors)
 		{
 			//System.out.println("checking neighbor:" + v);
@@ -195,7 +195,7 @@ public class LRPartitionAlgo
 							//orientedGraph.getEdgeSource(e2) + "," + orientedGraph.getEdgeTarget(e2) + ") b" + b2 + "::lowpt=" + heightB2);
 							if (heightB1 > orientedGraph.lowpt(e2) && heightB2 > orientedGraph.lowpt(e1))
 							{
-								///System.out.println("dif constraint");
+								//System.out.println("dif constraint");
 								// check if there is no different sign edge between the two vertices yet
 								if (constraintGraph.containsEdge(b1, b2))
 								{
@@ -205,7 +205,7 @@ public class LRPartitionAlgo
 										// There is already a same-constraint edge between the 2 vertices : impossible
 										// to be planar 
 										//edge marked with weight 0
-										System.out.println("not planar : not previously dif-constraint");
+										//System.out.println("not planar : not previously dif-constraint");
 										constraintGraph.setEdgeWeight(previousConstraintEdge, 0);
 										//return null;
 									}
@@ -242,7 +242,7 @@ public class LRPartitionAlgo
 												// impossible to be planar
 												//edge marked with weight 0
 												constraintGraph.setEdgeWeight(previousConstraintEdge, 0);
-												System.out.println("not planar not previously same-constraint");
+												//System.out.println("not planar not previously same-constraint");
 												//return null;
 											}
 										} 
