@@ -4,7 +4,7 @@ This program tests wether a graph is planar using the Left-Right Planarity Crite
 
 To run the program: 
 -built it with ant (build.xml) with the command:
-ant build create_run_jar
+ant
 -lauch the executable jar file created: java -jar LRPlanarityTest.jar [nameOfTheGraphWitoutJSONExtension]
 where name of the graph is the filename of the .json file located in graphs/ directory.
 
