@@ -3,7 +3,8 @@ Left-Right Planarity Criterion Test
 This program tests wether a graph is planar using the Left-Right Planarity Criterion.
 
 To run the program: 
--built it with ant (build.xml)
+-built it with ant (build.xml) with the command:
+ant build create_run_jar
 -lauch the executable jar file created: java -jar LRPlanarityTest.jar [nameOfTheGraphWitoutJSONExtension]
 where name of the graph is the filename of the .json file located in graphs/ directory.
 
