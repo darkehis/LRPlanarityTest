@@ -1,6 +1,7 @@
 import java.util.Set;
 
 import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.io.DOTExporter;
 import org.json.JSONObject;
 
 public class Main
@@ -13,9 +14,15 @@ public class Main
 			graphName = "paperExample";
 		else
 			graphName = args[0];
+		
+
 		JSONObject test = FileHandler.readJson(graphName);
+		
+
 		System.out.println("Testing planarity of " + graphName);
 		LRUndirectedGraph graphTest = new LRUndirectedGraph(test);
+		
+		FileHandler.saveUndirectedGraphToDOT(graphTest, graphName);
 		LROrientedDFSGraph orientedDFSGraph =  LRPartitionAlgo.generateLROrientedDFSGraph(graphTest);
 		Set<DefaultEdge> edges = orientedDFSGraph.edgeSet();
 		int nbBackEdge =0;

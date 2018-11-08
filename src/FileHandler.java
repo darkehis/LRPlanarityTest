@@ -3,6 +3,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.io.DOTExporter;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -60,6 +62,23 @@ public class FileHandler
 			e.printStackTrace();
 		}
 		return result;
+	}
+	
+	public static void saveUndirectedGraphToDOT(LRUndirectedGraph graph,String filename)
+	{
+		FileWriter file;
+		try
+		{
+			file = new FileWriter("./graphs/" + filename + ".dot");
+			DOTExporter<Integer, DefaultEdge> originalGraphExporter = new DOTExporter<>();
+			originalGraphExporter.exportGraph(graph, file);
+		} catch (IOException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+
 	}
 
 }
