@@ -18,7 +18,8 @@ public class LRUndirectedGraph extends SimpleGraph<Integer, DefaultEdge>
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	public Map<Integer, Integer> _mapVertexHeight;
+	private Map<Integer, Integer> _mapVertexHeight;
+	private Set<DefaultEdge> _setMarkedEdge;
 	
 	
 	
@@ -28,6 +29,7 @@ public class LRUndirectedGraph extends SimpleGraph<Integer, DefaultEdge>
 	{
 		super(DefaultEdge.class);
 		_mapVertexHeight = new HashMap<>();
+		_setMarkedEdge = new HashSet<>();
 	}
 	
 	
@@ -98,7 +100,7 @@ public class LRUndirectedGraph extends SimpleGraph<Integer, DefaultEdge>
 			e.printStackTrace();
 		}
 		
-		resetHeight();
+		reset();
 		
 	}
 	
@@ -189,13 +191,15 @@ public class LRUndirectedGraph extends SimpleGraph<Integer, DefaultEdge>
 	
 
 	
-	public void resetHeight()
+	public void reset()
 	{
 		Set<Integer> vertices = vertexSet();
 		for(int v : vertices)
 		{
 			_mapVertexHeight.put(v, Integer.MAX_VALUE);
 		}
+		_setMarkedEdge.clear();
+		
 	}
 	
 	public void setVertexHeight(int v,int height)
@@ -206,6 +210,25 @@ public class LRUndirectedGraph extends SimpleGraph<Integer, DefaultEdge>
 	public int getVertexHeight(int v)
 	{
 		return _mapVertexHeight.get(v);
+	}
+	
+	public DefaultEdge getUnmarkedEdge(Integer v)
+	{
+		Set<DefaultEdge> incidentEdges =  new HashSet<>( edgesOf(v));
+		incidentEdges.removeAll(_setMarkedEdge);
+		if(!incidentEdges.isEmpty())
+		{
+			return incidentEdges.iterator().next();
+		}
+		else
+		{
+			return null;
+		}
+	}
+	
+	public void setEdgesMarked(DefaultEdge e)
+	{
+		_setMarkedEdge.add(e);
 	}
 	
 

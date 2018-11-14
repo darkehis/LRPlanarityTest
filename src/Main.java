@@ -1,7 +1,12 @@
+import java.util.Map;
 import java.util.Set;
 
 import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.io.Attribute;
 import org.jgrapht.io.DOTExporter;
+import org.jgrapht.io.DOTImporter;
+import org.jgrapht.io.EdgeProvider;
+import org.jgrapht.io.VertexProvider;
 import org.json.JSONObject;
 
 public class Main
@@ -11,18 +16,26 @@ public class Main
 	{
 		String graphName;
 		if(args.length == 0)
-			graphName = "paperExample";
+			graphName = "petersen";
 		else
 			graphName = args[0];
 		
 
-		JSONObject test = FileHandler.readJson(graphName);
+		//graphName = "K_5";
+		//JSONObject test = FileHandler.readJson(graphName);
+		
+		LRUndirectedGraph graph = FileHandler.readDotGraph(graphName);
 		
 
 		System.out.println("Testing planarity of " + graphName);
-		LRUndirectedGraph graphTest = new LRUndirectedGraph(test);
 		
-		FileHandler.saveUndirectedGraphToDOT(graphTest, graphName);
+		LRPartitionAlgo.LRCriterionPlanarityTest(graph,graphName);
+		
+		
+		
+
+		
+		/*FileHandler.saveUndirectedGraphToDOT(graphTest, graphName);
 		LROrientedDFSGraph orientedDFSGraph =  LRPartitionAlgo.generateLROrientedDFSGraph(graphTest);
 		Set<DefaultEdge> edges = orientedDFSGraph.edgeSet();
 		int nbBackEdge =0;
@@ -44,7 +57,9 @@ public class Main
 		else 
 		{
 			System.out.println("Graph is not planar: constraint graph is impossible");
-		}
+		}*/
+		
+		
 		
 	}
 

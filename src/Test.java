@@ -12,8 +12,13 @@ public class Test
 {
 	public static void main(String[] args)
 	{
-		LRUndirectedGraph g = LRUndirectedGraph.ErdosRenyiGraph(5, 1.0);
-		FileHandler.writeJson(g.generateJsonObject(), "K_5ER");
+		Pair<Integer,Integer> right = new Pair<>(0,1);
+		Pair<Integer, Integer> left = new Pair<>(1,2);
+		Pair<Pair<Integer,Integer>,Pair<Integer,Integer>> conflictPair = new Pair<>(left,right);
+		
+		
+		
+		System.out.println("(" + conflictPair.second().second());
 		
 	}
 
