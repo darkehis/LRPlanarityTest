@@ -13,7 +13,6 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.Vector;
 
-import org.apache.commons.collections4.MultiValuedMap;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.io.DOTExporter;
@@ -25,6 +24,10 @@ public class LRPartitionAlgo
 	// todo: change it to handle multiple connected part
 	public final static int ROOT_ID = 1;
 
+	
+	/*-------------------------- polynomial version-------------------------------*/
+	
+	
 	// function generating oriented DFS graph
 	public static LROrientedDFSGraph generateLROrientedDFSGraph(LRUndirectedGraph originalGraph)
 	{
@@ -47,31 +50,24 @@ public class LRPartitionAlgo
 	// DFS + list of return edges for each edge
 	public static void DFSOld(LRUndirectedGraph originalGraph, LROrientedDFSGraph graph, int currentVertex)
 	{
-		//System.out.println("Recursion on vertex:" + currentVertex + " of height "	+ originalGraph.getVertexHeight(currentVertex) + " or " + graph.getVertexHeight(currentVertex));
 		// if not root: update the return points of the parent edge of the current
 		// vertex
 		DefaultEdge parentEdge = graph.parentEdge(currentVertex);
 		// tree edges
 		while (!originalGraph.getUnmarkedNeighbors(currentVertex).isEmpty())
 		{
-			//int size = originalGraph.getUnmarkedNeighbors(currentVertex).size();
-			//System.out.println("vertex " + currentVertex + ":" + size + " unmarked neighbors.");
-
 			int newVertex = originalGraph.getUnmarkedNeighbors(currentVertex).iterator().next();
 
-			//System.out.println("Previous height of neighbor:" + newVertex + "=" + originalGraph.getVertexHeight(newVertex));
 			// updating the height in the oriented graph and in the original undirected
 			// graph
 			originalGraph.setVertexHeight(newVertex, originalGraph.getVertexHeight(currentVertex) + 1);
 			graph.addVertex(newVertex);
 			graph.setVertexHeight(newVertex, originalGraph.getVertexHeight(newVertex));
 
-			//System.out.println("New height of vertex:" + newVertex + "=" + originalGraph.getVertexHeight(newVertex));
-			//size = originalGraph.getUnmarkedNeighbors(currentVertex).size();
-			//System.out.println("Vertex " + currentVertex + " has now " + size + " unmarked neighbors");
+	
 
-			DefaultEdge treeEdge = new DefaultEdge(); // treeEdge : newVertex.get_height() = currentVertex.get_height()
-														// + 1
+			DefaultEdge treeEdge = new DefaultEdge(); // treeEdge : newVertex.get_height() = currentVertex.get_height() +1
+											
 
 			graph.addEdge(currentVertex, newVertex, treeEdge);
 			DFSOld(originalGraph, graph, newVertex);
@@ -82,14 +78,11 @@ public class LRPartitionAlgo
 		}
 		// back edges
 		Set<Integer> neighbors = originalGraph.getNeighbors(currentVertex);
-		//System.out.println("handling backedges for vertex:" + currentVertex);
 		for (int v : neighbors)
 		{
-			//System.out.println("checking neighbor:" + v);
 
 			if (!graph.containsEdge(v, currentVertex) && !graph.containsEdge(currentVertex, v))
 			{
-				//System.out.println("no edge between " + v + " and " + currentVertex);
 				DefaultEdge backEdge = new DefaultEdge();// backEdge : currentVerttex.get_height > v.get_height()
 				graph.addEdge(currentVertex, v, backEdge);
 				graph.updateBackEdgeReturnEdge(backEdge);
@@ -201,11 +194,8 @@ public class LRPartitionAlgo
 							}
 							constraintGraph.addVertex(b2);
 							// checking different constraint;
-//System.out.println("checking constraint: (" + orientedGraph.getEdgeSource(e1) + "," + orientedGraph.getEdgeTarget(e1) + ") b" + b1 + "::lowpt=" + heightB1 + " AND (" +
-							//orientedGraph.getEdgeSource(e2) + "," + orientedGraph.getEdgeTarget(e2) + ") b" + b2 + "::lowpt=" + heightB2);
 							if (heightB1 > orientedGraph.getLowpt(e2) && heightB2 > orientedGraph.getLowpt(e1))
 							{
-								//System.out.println("dif constraint");
 								// check if there is no different sign edge between the two vertices yet
 								if (constraintGraph.containsEdge(b1, b2))
 								{
@@ -215,9 +205,7 @@ public class LRPartitionAlgo
 										// There is already a same-constraint edge between the 2 vertices : impossible
 										// to be planar 
 										//edge marked with weight 0
-										//System.out.println("not planar : not previously dif-constraint");
 										constraintGraph.setEdgeWeight(previousConstraintEdge, 0);
-										//return null;
 									}
 								} 
 								else
@@ -240,7 +228,6 @@ public class LRPartitionAlgo
 								{
 									if(!childEdge.equals(e3) && orientedGraph.getLowpt(childEdge) < heightBMin)
 									{
-										//System.out.println("same constraint");
 										foundSameConstraint = true;
 										// check if there is no different sign edge between the two vertices yet
 										if (constraintGraph.containsEdge(b1, b2))
@@ -252,8 +239,6 @@ public class LRPartitionAlgo
 												// impossible to be planar
 												//edge marked with weight 0
 												constraintGraph.setEdgeWeight(previousConstraintEdge, 0);
-												//System.out.println("not planar not previously same-constraint");
-												//return null;
 											}
 										} 
 										else
@@ -388,6 +373,9 @@ public class LRPartitionAlgo
 		return subsets;
 	}
 	
+	
+	/*----------------------------linear version---------------------------*/
+	
 	public static void LRCriterionPlanarityTest(LRUndirectedGraph originalGraph,String graphName)
 	{
 		// unmarked <=> height = infinity
@@ -424,15 +412,6 @@ public class LRPartitionAlgo
 		if(DFS2(orientedGraph, ROOT_ID))
 		{
 			System.out.println("graph is planar!");
-			/*System.out.println("--------------------");
-			
-			for(DefaultEdge e : orientedGraph.edgeSet())
-			{
-				System.out.println("for edge:" + e + " ref:" + orientedGraph.getEdgeRef(e) + "::" + orientedGraph.getSide(e));
-			}
-			
-			
-			System.out.println("---------------------");*/
 			//embedding
 			for(DefaultEdge e : orientedGraph.edgeSet())
 			{
@@ -440,22 +419,9 @@ public class LRPartitionAlgo
 			}
 			
 			
-			/*System.out.println("--------------------");
-			
-			for(DefaultEdge e : orientedGraph.edgeSet())
-			{
-				System.out.println("for edge:" + e + " ref:" + orientedGraph.getEdgeRef(e) + "::" + orientedGraph.getSide(e));
-			}
-			
-			
-			System.out.println("---------------------");*/
 			orientedGraph.sortOutGoingEdge();
 			dotString = orientedGraph.generateDOTString();
 			FileHandler.saveDotFile(dotString,graphName +  "_oriented");
-			/*System.out.println("final Sorting done: computing drawing order of edges");
-			DFS3(orientedGraph,ROOT_ID);
-			dotString = orientedGraph.generateDOTString();
-			FileHandler.saveDotFile(dotString, "oriented2");*/
 		}
 		
 		
@@ -469,7 +435,6 @@ public class LRPartitionAlgo
 	// DFS + list of return edges for each edge
 	public static void DFS1(LRUndirectedGraph originalGraph, LROrientedDFSGraph graph, int currentVertex)
 	{
-		//System.out.println("Recursion on vertex:" + currentVertex + " of height "	+ originalGraph.getVertexHeight(currentVertex) + " or " + graph.getVertexHeight(currentVertex));
 		// if not root: update the return points of the parent edge of the current
 		// vertex
 		DefaultEdge parentEdge = graph.parentEdge(currentVertex);
@@ -499,8 +464,6 @@ public class LRPartitionAlgo
 					graph.setParentEdge(target, eO);
 					graph.setVertexHeight(target, graph.getVertexHeight(currentVertex)+1);
 					//-------------recursion-------------
-					
-					//System.out.println("recursion on vertex:" + target);
 					DFS1(originalGraph,graph,target);
 				}
 				else //back edge
@@ -519,8 +482,6 @@ public class LRPartitionAlgo
 				//update lowpt of parent edge 
 				if(parentEdge != null)
 				{
-					//System.out.println("for edge:" + eO +" of lowpt:" + graph.getLowpt(eO));
-					//System.out.println("updating lowpt of:" + parentEdge + "of lowpt:" + graph.getLowpt(parentEdge));
 					if(graph.getLowpt(eO)<graph.getLowpt(parentEdge))
 					{
 						graph.setLowpt2(parentEdge, Math.min(graph.getLowpt(parentEdge), graph.getLowpt2(eO)));
@@ -535,7 +496,6 @@ public class LRPartitionAlgo
 						graph.setLowpt2(parentEdge, Math.min(graph.getLowpt2(parentEdge), graph.getLowpt2(eO)));
 					}
 					
-					//System.out.println("new lowpt:" + graph.getLowpt(parentEdge));
 				}
 			}
 			else
@@ -550,17 +510,12 @@ public class LRPartitionAlgo
 	{
 		DefaultEdge parentEdge = graph.parentEdge(currentVertex);
 		SortedSet<DepthEdgePair> sortedOutgoingEdges = graph.getSortedOutgoingEdges(currentVertex);
-		//System.out.println("checking vertex:" + currentVertex + " with " + sortedOutgoingEdges.size()+ " outgoing edges");
 		for(DepthEdgePair pair : sortedOutgoingEdges)
 		{
-			//Collection<DefaultEdge> listEdge = sortedOutgoingEdges.get(entry.getKey());
 			int depth = pair.first();
 
 			DefaultEdge e = pair.second();
-			
-			//System.out.println("for edge:" + e.toString() + " at depth:" + depth);
 			graph.setStackBottom(e, graph.getStackConflictPair().size());
-			//System.out.println("stBot of:" + e +"=" + graph.getStackConflictPair().size());
 			if(e.equals(graph.parentEdge(graph.getEdgeTarget(e)))) //tree edge
 			{
 				if(!DFS2(graph,graph.getEdgeTarget(e)))
@@ -568,19 +523,16 @@ public class LRPartitionAlgo
 			}
 			else //backEdge
 			{
-				//System.out.println("backEdge found");
 				graph.setLowptEdge(e, e);
 				Interval left = Interval.emptyInterval();
 				Interval right = new Interval(e,e);
 				ConflictPair p = new ConflictPair(left, right);
 				graph.pushStack(p);
-				//System.out.println("conflict pair pushed on stack:" + p);
 			}
 			
 			//integrate new edges
 			if(graph.getLowpt(e)<graph.getVertexHeight(currentVertex)) //e has return edge
 			{
-				//System.out.println(e + " has return edge");
 				if(depth == sortedOutgoingEdges.first().first())
 				{
 					if(parentEdge != null)
@@ -640,17 +592,11 @@ public class LRPartitionAlgo
 	//algorithm 4
 	public static boolean addConstraint(LROrientedDFSGraph graph, DefaultEdge e,DefaultEdge parentEdge)
 	{
-		//System.out.println("adding constraint:");
-		//System.out.println(graph.getStackDesc());
 		ConflictPair p = new ConflictPair(Interval.emptyInterval(), Interval.emptyInterval());
-		/*Interval newPRight;
-		Interval newPLeft;*/
 		//merge return edges of e into p.right
-		//System.out.println("merge return edge of:" + e.toString() + " with stBot:" + graph.getStackBottom(e) + " into p.r");
 		while(graph.getStackConflictPair().size() != graph.getStackBottom(e))
 		{
 			ConflictPair q = graph.popStack();
-			//System.out.println("stack top:" + q);
 			if(!q.left().equals(Interval.emptyInterval()))
 			{
 				q.swapLR();
@@ -662,15 +608,11 @@ public class LRPartitionAlgo
 			}
 			else
 			{
-				//System.out.println("merging intervals");
-				//System.out.println("checking q:" + q + " of lowpt:" + graph.getLowpt(q.right().low()) + " and parent edge:" + parentEdge + " of lowpt:" + graph.getLowpt(parentEdge));
 				if(graph.getLowpt(q.right().low()) > graph.getLowpt(parentEdge)) //merge intervals
 				{				
-					//System.out.println("new right part of conflict pair");
 					Interval newPRight;
 					if(p.right().equals(Interval.emptyInterval())) //topmost interval
 					{
-						//System.out.println("topmost interval");
 						newPRight = Interval.emptyInterval();
 						newPRight.setHigh(q.right().high());
 					}
@@ -680,30 +622,20 @@ public class LRPartitionAlgo
 						graph.setEdgeRef(p.right().low(), q.right().high());
 					}
 					newPRight.setLow(q.right().low());
-					//System.out.println("setting the new right:" + newPRight + " of the conflict pair:" + p);
 					p.setRight(newPRight);
-					//System.out.println("so p=" + p);
-					//System.out.println("new right part of the interval set");
 			
 				}
 				else //allign
 				{
-					//System.out.println("allign");
 					graph.setEdgeRef(q.right().low(), graph.getLowptEdge(parentEdge));
 				}
 			}
 		}
-		/*System.out.println("after right merge:");
-		System.out.println(graph.getStackDesc());
-		System.out.println("so stackt top:" + graph.getStackTop());*/
 		//merge conflict return edges of previous sibling edges into p.l
-		//System.out.println("merging conflict return edges of previous sibling edges into p.l");
 
 		while(conflicting(graph, graph.getStackTop().left(),e) || conflicting(graph, graph.getStackTop().right(), e))
 		{
 			ConflictPair q = graph.popStack();
-			//System.out.println("checking pair p:" + q + " and edge:" + e);
-			//Interval newPLeft;
 			if(conflicting(graph, q.right(), e))
 			{
 				q.swapLR();
@@ -715,17 +647,14 @@ public class LRPartitionAlgo
 			}
 			else //merge interval below lowpt(e) into p.right
 			{
-				//System.out.println("merging intervale below:lowpt(" + e + ") into p.r for pair:" + q);
 				graph.setEdgeRef(p.right().low(), q.right().high());
 				if(q.right().low() != null)
 				{
-					//System.out.println("setting p.r.low");
 					p.right().setLow(q.right().low());
 				}
 			}
 			if(p.left().equals(Interval.emptyInterval())) //topmost interval
 			{
-				//System.out.println("topmost interval");
 				p.left().setHigh(q.left().high());
 			}
 			else
@@ -737,20 +666,14 @@ public class LRPartitionAlgo
 		
 		if(!p.equals(ConflictPair.emptyPair()))
 		{
-			//System.out.println("pushing pair p:" + p);
 			graph.pushStack(p);
 		}
-		/*System.out.println("after left merge");
-		System.out.println(graph.getStackDesc());
-		
-		System.out.println("constraint added");*/
 		
 		return true;
 	}
 	
 	public static boolean conflicting(LROrientedDFSGraph graph, Interval i, DefaultEdge e)
 	{
-		//System.out.println("checking conflict between:" + i + " and " + e);
 		return(!i.equals(Interval.emptyInterval()) && graph.getLowpt(i.high())>graph.getLowpt(e));
 	}
 	
@@ -759,8 +682,6 @@ public class LRPartitionAlgo
 
 	public static void trimBackEdges(LROrientedDFSGraph graph,int u)
 	{
-		//int u = graph.getEdgeSource(parentEdge);
-		//System.out.println("trimming backedges of:" + u);
 		//drop entire pair of conflict
 		Deque<ConflictPair> stack = graph.getStack();
 		while(!stack.isEmpty() && lowest(graph,graph.getStackTop()) == graph.getVertexHeight(u))
@@ -836,7 +757,6 @@ public class LRPartitionAlgo
 			if(pair.second().equals(graph.parentEdge(w)))
 			{
 				//pair.second is a tree edge
-				//System.out.println(pair.second() + " is a tree edge");
 				EdgeList l = graph.getOrderedAdjList(w);
 				if(l != null)
 				{
@@ -864,7 +784,6 @@ public class LRPartitionAlgo
 				//pair.second() is a backedge
 				if(graph.getSide(pair.second()) == 1)
 				{
-					//System.out.println("adding:" + pair.second() + " at the start for:" + w);
 					EdgeList l = graph.getOrderedAdjList(w);
 					if(l != null)
 					{
@@ -883,13 +802,9 @@ public class LRPartitionAlgo
 						l._edge = pair.second();
 						graph.setOrderedAdjLis(w, l);
 					}
-					
-
-					//graph.drawingOrderAddFirst(w, pair.second());
 				}
 				else
-				{
-					//System.out.println("adding:" + pair.second() + " at the end for:" + w);
+				{;
 					EdgeList l = graph.getOrderedAdjList(w);
 					EdgeList prevL = null;
 
@@ -907,9 +822,6 @@ public class LRPartitionAlgo
 					}
 					newL._next = l;
 					graph.setLeftRef(w, pair.second());
-
-				
-					//graph.drawingOrderAddLast(w, pair.second());
 				}
 			}
 			
@@ -920,14 +832,11 @@ public class LRPartitionAlgo
 	
 	public static int sign(LROrientedDFSGraph graph,DefaultEdge e)
 	{
-		//System.out.println("checking sign of:" + e);
 		if(graph.getEdgeRef(e) != null)
 		{
-			//System.out.println("edge:" + e +" has ref:" + graph.getEdgeRef(e));
 			graph.setSide(e, graph.getSide(e)*sign(graph,graph.getEdgeRef(e)));
 			graph.setEdgeRef(e, null);
 		}
-		//System.out.println("so sign of e:" + graph.getSide(e));
 		return graph.getSide(e);
 	}
 
