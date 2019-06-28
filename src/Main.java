@@ -26,10 +26,12 @@ public class Main
 
 		System.out.println("Testing planarity of " + graphName);
 		
-		LRPartitionAlgo.LRCriterionPlanarityTest(graph,graphName);
 		
+		//long time = LRPartitionAlgo.LRCriterionPlanarityTestQuadratic(graph, graphName);
+		long time = LRPartitionAlgo.LRCriterionPlanarityTestLinear(graph, graphName);
+		//FileHandler.writePerf(graph, time);
 		
-		
+		System.exit(0);
 		
 		
 	}

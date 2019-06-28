@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
@@ -174,9 +175,10 @@ public class LRUndirectedGraph extends SimpleGraph<Integer, DefaultEdge>
 		
 	}
 	
-	public Set<Integer> getUnmarkedNeighbors(int v)
+	public SortedSet<Integer> getUnmarkedNeighbors(int v)
 	{
-		Set<Integer> unmarkerNeighbors = new HashSet<>();
+		SortedSet<Integer> unmarkerNeighbors = new TreeSet<>();
+
 		Set<Integer> neighbors = getNeighbors(v);
 		for(int neighbor : neighbors)
 		{

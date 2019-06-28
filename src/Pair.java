@@ -1,4 +1,4 @@
-import java.util.AbstractMap.SimpleEntry;
+
 
 public class Pair<T1,T2>
 {
@@ -36,5 +36,9 @@ public class Pair<T1,T2>
 		this.second = second;
 	}
 	
+	public String toString()
+	{
+		return "("+ first() + "," + second() + ")";
+	}
 
 }

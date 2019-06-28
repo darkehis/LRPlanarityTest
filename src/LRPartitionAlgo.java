@@ -17,12 +17,11 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.io.DOTExporter;
 
-import com.google.common.graph.Graph;
 
 public class LRPartitionAlgo
 {
-	// todo: change it to handle multiple connected part
-	public final static int ROOT_ID = 1;
+	//The graph has to have a vertex with ID=0, and has to be connected
+	public final static int ROOT_ID = 0;
 
 	
 	/*-------------------------- polynomial version-------------------------------*/
@@ -42,7 +41,6 @@ public class LRPartitionAlgo
 		// -----------recursion------------
 		DFSOld(originalGraph, graph, ROOT_ID);
 
-
 		return graph;
 	}
 
@@ -53,10 +51,13 @@ public class LRPartitionAlgo
 		// if not root: update the return points of the parent edge of the current
 		// vertex
 		DefaultEdge parentEdge = graph.parentEdge(currentVertex);
+		
+		//System.out.println("Parent edge of vertex:" + currentVertex + " is " + parentEdge);
 		// tree edges
 		while (!originalGraph.getUnmarkedNeighbors(currentVertex).isEmpty())
 		{
-			int newVertex = originalGraph.getUnmarkedNeighbors(currentVertex).iterator().next();
+			int newVertex = originalGraph.getUnmarkedNeighbors(currentVertex).last();
+			//int newVertex = originalGraph.getUnmarkedNeighbors(currentVertex).iterator().next();
 
 			// updating the height in the oriented graph and in the original undirected
 			// graph
@@ -70,7 +71,11 @@ public class LRPartitionAlgo
 											
 
 			graph.addEdge(currentVertex, newVertex, treeEdge);
+			graph.setParentEdge(newVertex, treeEdge);
+			
 			DFSOld(originalGraph, graph, newVertex);
+			
+			
 			if (parentEdge != null)
 			{
 				graph.addReturnEdgeHeight(parentEdge, treeEdge);
@@ -84,15 +89,21 @@ public class LRPartitionAlgo
 			if (!graph.containsEdge(v, currentVertex) && !graph.containsEdge(currentVertex, v))
 			{
 				DefaultEdge backEdge = new DefaultEdge();// backEdge : currentVerttex.get_height > v.get_height()
+	
 				graph.addEdge(currentVertex, v, backEdge);
+				//System.out.println("Adding backEdge:" + backEdge + " with parent edge " + parentEdge);
 				graph.updateBackEdgeReturnEdge(backEdge);
 				if (parentEdge != null)
 				{
 					graph.addReturnEdgeHeight(parentEdge, backEdge);
+					graph.updateLowpt(backEdge);
 				}
 			}
 		}
 	}
+	
+	
+
 	
 
 
@@ -143,28 +154,37 @@ public class LRPartitionAlgo
 		Iterator<DefaultEdge> itEdge = setEdge.iterator();
 		int nextIdVertex = 0;
 		Map<Integer,Integer> mapVertexId = new HashMap<>();
+		//System.out.println("oriented graph has " + orientedGraph.edgeSet().size() + " edges.");
 		while (itEdge.hasNext())
 		{
 			DefaultEdge e = itEdge.next();
 			if (orientedGraph.isFork(e))
 			{
+				//System.out.println("Checking fork " + e);
 				List<DefaultEdge> listOutgoingEdge = new ArrayList<>(
 						orientedGraph.outgoingEdgesOf(orientedGraph.getEdgeTarget(e)));
+				//System.out.println("Fork:" + e + " has " + listOutgoingEdge.size() + " outgoing edges");
 				List<List<DefaultEdge>> listPairOutgoingEdge = subsets(listOutgoingEdge, 2, listOutgoingEdge.get(0));
+				//System.out.println("Fork:" + e + " has " + listPairOutgoingEdge.size() + " pairs of outgoing edges");
 				Iterator<List<DefaultEdge>> itPair = listPairOutgoingEdge.iterator();
 				while (itPair.hasNext())
 				{
+					
 					List<DefaultEdge> pair = itPair.next();
+					//System.out.println("checking pair " + pair.toString());
 					DefaultEdge e1 = pair.get(0);
 					DefaultEdge e2 = pair.get(1);
 					SortedSet<Integer> returnEdge1 = orientedGraph.getReturnEdge(e1);
 					SortedSet<Integer> returnEdge2 = orientedGraph.getReturnEdge(e2);
+					
+					//System.out.println("We have " + e1 + ":" + returnEdge1.size() + " and " + e2 + ":" + returnEdge2.size());
 					Iterator<Integer> itB1 = returnEdge1.iterator();
 					while (itB1.hasNext())
 					{
 						int heightB1 = itB1.next();
 						int hashB1 = orientedGraph.getReturnRepresentant(e1, heightB1).hashCode();
 						int b1;
+						//only for human readable IDs 
 						if(mapVertexId.containsKey(hashB1))
 						{
 							b1 = mapVertexId.get(hashB1);
@@ -193,9 +213,14 @@ public class LRPartitionAlgo
 								mapVertexId.put(hashB2, b2);
 							}
 							constraintGraph.addVertex(b2);
+							
+							DefaultEdge backEdge1 = orientedGraph.getReturnRepresentant(e1, heightB1);
+							DefaultEdge backEdge2 = orientedGraph.getReturnRepresentant(e2, heightB2);
 							// checking different constraint;
+							//System.out.println("We have: heightB1=" +b1 + heightB1 + " and lowpt(e2)=" +e2 + orientedGraph.getLowpt(e2) + " AND heightb2=" + b2 + heightB2 + " and lowpt(e1)=" + e1 + orientedGraph.getLowpt(e1) );
 							if (heightB1 > orientedGraph.getLowpt(e2) && heightB2 > orientedGraph.getLowpt(e1))
 							{
+								//System.out.println("dif constraint detected between " + e1 + " and " + e2);
 								// check if there is no different sign edge between the two vertices yet
 								if (constraintGraph.containsEdge(b1, b2))
 								{
@@ -213,6 +238,8 @@ public class LRPartitionAlgo
 									DefaultWeightedEdge difConstraintEdge = new DefaultWeightedEdge();
 									constraintGraph.addEdge(b1, b2, difConstraintEdge);
 									constraintGraph.setEdgeWeight(difConstraintEdge, -1);
+									
+									System.out.println("dif con between:" + backEdge1 + " AND " + backEdge2 );
 								}
 							}
 
@@ -228,6 +255,7 @@ public class LRPartitionAlgo
 								{
 									if(!childEdge.equals(e3) && orientedGraph.getLowpt(childEdge) < heightBMin)
 									{
+										//System.out.println("same constraint detected between " + e1 + " and " + e2);
 										foundSameConstraint = true;
 										// check if there is no different sign edge between the two vertices yet
 										if (constraintGraph.containsEdge(b1, b2))
@@ -246,6 +274,7 @@ public class LRPartitionAlgo
 											DefaultWeightedEdge sameConstraintEdge = new DefaultWeightedEdge();
 											constraintGraph.addEdge(b1, b2, sameConstraintEdge);
 											constraintGraph.setEdgeWeight(sameConstraintEdge, 1);
+											System.out.println("same con between:" + backEdge1 + " AND " + backEdge2 );
 										}
 										break;
 									}
@@ -262,23 +291,17 @@ public class LRPartitionAlgo
 		return constraintGraph;
 	}
 
-	// graph is balanced <=> no cycle with a odd number of (-1)-edge
-	// DFS to catch cycle and simple multiplication to know if there is an odd
-	// number or (-1)-edge in a cycle:
 	
-	  public static boolean isBalanced(LRConstraintGraph graph) 
-	  { 
-		  int rootId = graph.vertexSet().iterator().next(); 
-		  return DFSBalanced(graph,rootId,new HashSet<>(),new HashSet<>(),new HashMap<>()); 
-		  
-	  }
 	 
 	  
   // core DFS algorithm 
 	  //bad code: not optimised nor complying with previous standard:REFACTOR!!!!!!!!!!!!!!
    public static boolean DFSBalanced(LRConstraintGraph constraintGraph,int vertex,Set<DefaultWeightedEdge> treeEdge,Set<Integer> markedVertex, Map<Integer,Integer> parentVertex) 
    {
+	   
+	   //System.out.println("Check balance of contraint graph.");
 	   Set<Integer> neighbors = constraintGraph.getNeighbors(vertex);
+	   System.out.println(neighbors.size());
 	   Iterator<Integer> itV = neighbors.iterator(); 
 	   boolean balanced = true;
 	   while(itV.hasNext()) 
@@ -286,11 +309,14 @@ public class LRPartitionAlgo
 		   int neighbor = itV.next();
 		   if(!markedVertex.contains(neighbor)) 
 		   {
+			   
 			   markedVertex.add(neighbor);
 			   treeEdge.add(constraintGraph.getEdge(vertex, neighbor));
-			   parentVertex.put(neighbor,vertex); 
+			   parentVertex.put(neighbor,vertex);
 			   //----------recursion------- 
 			   balanced = balanced && DFSBalanced(constraintGraph,neighbor,treeEdge,markedVertex,parentVertex); 
+			   if(!balanced)
+				   return false;
 		   } 
 		   
 	   }
@@ -299,6 +325,7 @@ public class LRPartitionAlgo
 	   while(itE.hasNext())
 	   { 
 		   DefaultWeightedEdge backedge = itE.next(); 
+		   System.out.println(backedge);
 		   if(!treeEdge.contains(backedge))
 		   {
 			   int returnPoint = constraintGraph.getEdgeTarget(backedge);
@@ -312,15 +339,20 @@ public class LRPartitionAlgo
 			   u = vertex; 
 			   while(u !=returnPoint) 
 			   { 
-				   v = parentVertex.get(u); product *= constraintGraph.getEdgeWeight(constraintGraph.getEdge(u, v));
+				   v = parentVertex.get(u); 
+				   product *= constraintGraph.getEdgeWeight(constraintGraph.getEdge(u, v));
 				   u = v;  
 			   }
+			   System.out.println("The product is: " + product);
 			   if(product == -1) 
 			   { 
+				   //System.out.println("returning false");
 				   return false;
 			   } 
 		   }  
 	   } 
+	   
+	   //System.out.println("check finished: returning " + balanced);
 	   return balanced; 
    }
 	 
@@ -373,11 +405,64 @@ public class LRPartitionAlgo
 		return subsets;
 	}
 	
+	public static long LRCriterionPlanarityTestQuadratic(LRUndirectedGraph originalGraph, String graphName)
+	{
+		long start = System.nanoTime();
+		// unmarked <=> height = infinity
+		originalGraph.reset();
+		
+		// for now only one connected part
+		originalGraph.setVertexHeight(ROOT_ID, 0);
+		
+		 // System.out.println("The original graph has " + originalGraph.vertexSet().size() + " vertices.");
+		
+		//orientation
+		  
+		  LROrientedDFSGraph orientedGraph = new LROrientedDFSGraph();	
+		// for now only one connected part
+		originalGraph.setVertexHeight(ROOT_ID, 0);
+		// root.set_height(0);
+		orientedGraph.addVertex(ROOT_ID);
+		orientedGraph.setVertexHeight(ROOT_ID, 0);
+		// -----------recursion------------
+		DFSOld(originalGraph, orientedGraph, ROOT_ID);
+
+		
+		//System.out.println("Oriented graph generated.");
+		 // System.out.println("The oriented graph has " + orientedGraph.vertexSet().size() + " vertices.");
+		
+
+		
+		
+		LRConstraintGraph constraintGraph = generateConstraintGraph(orientedGraph);
+		//System.out.println("Constraints graph generated.");
+		  //System.out.println("The constraint graph has " + constraintGraph.vertexSet().size() + " vertices." + " and " + constraintGraph.edgeSet().size() + " edges.");
+		  
+		  FileHandler.saveConstraintGraphToDOT(constraintGraph, "constraintGraph");
+		  FileHandler.writeJson(constraintGraph.generateJsonObject(), "constraint graph");
+		
+		boolean planar = isBalanced(constraintGraph);
+		if(planar)
+		{
+			System.out.println("The graph is planar.");
+		}
+		else
+		{
+			System.out.println("The graph is not planar");
+		}
+		
+		long finish = System.nanoTime();
+		long timeElapsed = finish - start;
+		return timeElapsed;
+
+	}
+	
 	
 	/*----------------------------linear version---------------------------*/
 	
-	public static void LRCriterionPlanarityTest(LRUndirectedGraph originalGraph,String graphName)
+	public static long LRCriterionPlanarityTestLinear(LRUndirectedGraph originalGraph,String graphName)
 	{
+		long start = System.nanoTime();
 		// unmarked <=> height = infinity
 		originalGraph.reset();
 		
@@ -387,16 +472,14 @@ public class LRPartitionAlgo
 		//orientation
 		LROrientedDFSGraph orientedGraph = new LROrientedDFSGraph(originalGraph);
 		
-		System.out.println("oriented graph generated");
+		//System.out.println("oriented graph generated");
 		
-
-
-		// root.set_height(0);
 		orientedGraph.setVertexHeight(ROOT_ID, 0);
 		// -----------recursion------------
 		DFS1(originalGraph, orientedGraph, ROOT_ID);
 		
-		System.out.println("first dfs done: sorting edges");
+		//orientedGraph.completeDesc();
+		//System.out.println("first dfs done: sorting edges");
 		
 		
 		//sorting edges according to nesting depth
@@ -405,9 +488,9 @@ public class LRPartitionAlgo
 		
 		
 		//testing
-		System.out.println("Edges sorted: beginning second DFS: testing planarity");
+		//System.out.println("Edges sorted: beginning second DFS: testing planarity");
 		String dotString;
-		dotString = orientedGraph.generateDOTString();
+		//dotString = orientedGraph.generateDOTString();
 		
 		if(DFS2(orientedGraph, ROOT_ID))
 		{
@@ -420,12 +503,14 @@ public class LRPartitionAlgo
 			
 			
 			orientedGraph.sortOutGoingEdge();
-			dotString = orientedGraph.generateDOTString();
+			dotString = orientedGraph.generateDOTStringTEST();
 			FileHandler.saveDotFile(dotString,graphName +  "_oriented");
 		}
 		
 		
-			
+		long finish = System.nanoTime();
+		long timeElapsed = finish - start;
+		return timeElapsed;
 		
 	}
 	
@@ -832,6 +917,7 @@ public class LRPartitionAlgo
 	
 	public static int sign(LROrientedDFSGraph graph,DefaultEdge e)
 	{
+		//System.out.println("getting edge ref of " + e);
 		if(graph.getEdgeRef(e) != null)
 		{
 			graph.setSide(e, graph.getSide(e)*sign(graph,graph.getEdgeRef(e)));
@@ -840,6 +926,147 @@ public class LRPartitionAlgo
 		return graph.getSide(e);
 	}
 
+	
+	// graph is balanced <=> no cycle with a odd number of (-1)-edge
+		// DFS to catch cycle and simple multiplication to know if there is an odd
+		// number or (-1)-edge in a cycle:
+		
+		  /*public static boolean isBalanced(LRConstraintGraph graph) 
+		  { 
+			  
+			  //int rootId = graph.vertexSet().iterator();
+			  
+			  System.out.println("checking balance of constraint graph.");
+			
+			  boolean balance = true;
+			  //checking for edge with weight = 0
+			  Iterator<DefaultWeightedEdge> itEdges = graph.edgeSet().iterator();
+			  
+			  while(itEdges.hasNext() && balance)
+			  {
+				  System.out.println("ok");
+				  DefaultWeightedEdge edge = itEdges.next();
+				  if(graph.getEdgeWeight(edge) == 0)
+				  {
+					  balance = false;
+				  }
+			  }
+			  
+			  
+			  
+			  
+			  
+			  
+			  
+			  
+			  //checking for cycle with odd number of "-" edge
+			  Iterator<Integer> itVertexId = graph.vertexSet().iterator();
+			  while(itVertexId.hasNext() && balance)
+			  {
+				  int id = itVertexId.next();
+				  
+				  balance = DFSBalanced(graph, id, new HashSet<>(),new HashSet<>(),new HashMap<>());
+				  //System.out.println("balance is " + balance);
+				  
+			  }
+			  System.out.println("check finished");
+			  //return DFSBalanced(graph,rootId,new HashSet<>(),new HashSet<>(),new HashMap<>()); 
+			  return balance;
+		  }*/
+	
+	
+	public static boolean isBalanced(LRConstraintGraph graph)
+	{
+		//System.out.println("checking balance of constraint graph.");
+		
+		  boolean balance = true;
+		  //checking for edge with weight = 0
+		  Iterator<DefaultWeightedEdge> itEdges = graph.edgeSet().iterator();
+		  
+		  while(itEdges.hasNext() && balance)
+		  {
+			  //System.out.println("ok");
+			  DefaultWeightedEdge edge = itEdges.next();
+			  if(graph.getEdgeWeight(edge) == 0)
+			  {
+				  balance = false;
+			  }
+		  }
+		  
+		  //System.out.println("after checking edges 0, graph is balanced:" + balance);
+		  
+		//checking for cycle with odd number of "-" edge
+		  //graph.resetMarkedVertices();
+		  graph.resetParentVertex();
+		  graph.resetVertexHeight();
+		  Iterator<Integer> itVertexId = graph.vertexSet().iterator();
+		  while(itVertexId.hasNext() && balance)
+		  {
+			  int id = itVertexId.next();
+			  
+			  if(graph.getVertexHeight(id) == -1)
+			  {
+				  graph.setVertexHeight(id, 0);
+				  balance = DFSBalanced(graph, id);
+			  }
+			  
+			  
+			  //System.out.println("balance is " + balance);
+			  
+		  }
+		  //System.out.println("check finished");
+		  //return DFSBalanced(graph,rootId,new HashSet<>(),new HashSet<>(),new HashMap<>()); 
+		  return balance;
+	}
+	
+	
+	public static boolean DFSBalanced(LRConstraintGraph graph, int vertexId)
+	{
+		boolean balance = true;
+		//System.out.println("checking vertex:" + vertexId + " with parent " + graph.getParentVertex(vertexId));
+		Set<Integer> neighbors = graph.getNeighbors(vertexId);
+		for(Integer nextVertex : neighbors)
+		{
+			if(nextVertex != graph.getParentVertex(vertexId))
+			{
+				if(graph.getVertexHeight(nextVertex) == -1)
+				{
+					graph.setParentVertex(nextVertex, vertexId);
+					graph.setVertexHeight(nextVertex, graph.getVertexHeight(vertexId)+1);
+					balance =  balance && DFSBalanced(graph, nextVertex);
+					if(balance == false)
+					{
+						return balance;
+					}
+				}
+				else if(graph.getVertexHeight(nextVertex) < graph.getVertexHeight(vertexId))
+				{
+					
+					//System.out.println("checking cycle beginning at vertex:" + nextVertex);
+					double product = graph.getEdgeWeight(graph.getEdge(vertexId, nextVertex));
+					int parent = graph.getParentVertex(vertexId);
+					int child = vertexId;
+					while(child != nextVertex)
+					{
+						//System.out.println("parent:" + parent + " and child:" + child);
+						product *= graph.getEdgeWeight(graph.getEdge(child, parent));
+						child = parent;
+						parent = graph.getParentVertex(parent);
+					}
+					//System.out.println("we have product=" + product);
+					if(product == -1)
+					{
+						return false;
+					}
+					
+					
+				}
+			}
+		}
+		//System.out.println("end recursion of vertex:" + vertexId);
+		return balance;
+	
+	}
 	
 }
 

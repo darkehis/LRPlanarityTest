@@ -1,5 +1,8 @@
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.jgrapht.graph.DefaultEdge;
@@ -16,6 +19,10 @@ public class LRConstraintGraph extends SimpleWeightedGraph<Integer, DefaultWeigh
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+	
+	private Map<Integer,Boolean> _mapMarkedVertices;
+	private Map<Integer,Integer> _mapParentVertex;
+	private Map<Integer,Integer> _mapVertexHeight;
 	
 	
 	
@@ -57,6 +64,7 @@ public class LRConstraintGraph extends SimpleWeightedGraph<Integer, DefaultWeigh
 			}
 			jArrayEdge.put(jArrayInfoEdge);
 		}
+		//System.out.println("generated:" + jArrayEdge.length() + " edges.");
 		
 		try
 		{
@@ -76,6 +84,9 @@ public class LRConstraintGraph extends SimpleWeightedGraph<Integer, DefaultWeigh
 	public LRConstraintGraph()
 	{
 		super(DefaultWeightedEdge.class);
+		_mapMarkedVertices = new HashMap<>();
+		_mapParentVertex = new HashMap<>();
+		_mapVertexHeight = new HashMap<>();
 	}
 	
 	public Set<Integer> getNeighbors(int v)
@@ -99,5 +110,68 @@ public class LRConstraintGraph extends SimpleWeightedGraph<Integer, DefaultWeigh
 		return setNeighbors;
 		
 	}
+	
+	public void resetMarkedVertices()
+	{
+		for(int vertex : vertexSet())
+		{
+			_mapMarkedVertices.put(vertex, false);
+		}
+	}
+	
+	public void markVertex(int vertex)
+	{
+		_mapMarkedVertices.put(vertex, true);
+	}
+	
+	public boolean isMarked(int vertex)
+	{
+		return _mapMarkedVertices.get(vertex);
+	}
+	
+	public void resetParentVertex()
+	{
+		for(int vertex : vertexSet())
+		{
+			_mapParentVertex.put(vertex, -1);
+		}
+	}
+	
+	public void resetVertexHeight()
+	{
+		for(int vertex : vertexSet())
+		{
+			_mapVertexHeight.put(vertex, -1);
+		}
+	}
+	
+	public void setVertexHeight(int vertex,int height)
+	{
+		_mapVertexHeight.put(vertex, height);
+	}
+	public int getVertexHeight(int vertex)
+	{
+		return _mapVertexHeight.get(vertex);
+		
+	}
+	
+	public int getParentVertex(int vertex)
+	{
+		/*if(vertex == -1)
+		{
+			return -1;
+		}
+		else
+		{*/
+			return _mapParentVertex.get(vertex);
+		//}
+
+	}
+	
+	public void setParentVertex(int vertex, int parent)
+	{
+		_mapParentVertex.put(vertex, parent);
+	}
+	
 
 }

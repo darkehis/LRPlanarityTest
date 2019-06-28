@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.io.Attribute;
 import org.jgrapht.io.DOTExporter;
 import org.jgrapht.io.DOTImporter;
@@ -103,6 +104,21 @@ public class FileHandler
 		}
 	}
 	
+	public static void saveConstraintGraphToDOT(LRConstraintGraph graph,String filename)
+	{
+		FileWriter file;
+		try
+		{
+			file = new FileWriter("./graphs/" + filename + ".dot");
+			DOTExporter<Integer, DefaultWeightedEdge> exporter = new DOTExporter<>();
+			exporter.exportGraph(graph, file);
+		} catch (IOException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
 	public static void saveDotFile(String dotString,String filename)
 	{
 		try (FileWriter file = new FileWriter("./graphs/" + filename + ".dot"))
@@ -160,5 +176,22 @@ public class FileHandler
 		
 		
 	}
+	
+	public static void writePerf(LRUndirectedGraph graph, long time)
+	{
+		try (FileWriter file = new FileWriter("performance.csv",true))
+	    {
+
+			String perf = graph.edgeSet().size() + "," + time + "\n";
+	        file.write(perf);
+	        file.flush();
+
+	    } 
+	    catch (IOException e) 
+	    {
+	        e.printStackTrace();
+	    }
+	}
+
 
 }
